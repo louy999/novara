@@ -10,28 +10,24 @@ const hashPassword = (password: string) => {
 
 class UserModel {
 	//create user
-	async create(u: User): Promise<User> {
+	async createUser(u: User): Promise<User> {
 		try {
 			//open connect with DB1
 			const connect = await db.connect()
 			const sql =
-				'INSERT INTO users ( username, email, number, password, imgprofile, balance, idNF, idNB, statusAccess, win ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *'
+				'INSERT INTO users ( name, phone, password, access, email ) values ($1, $2, $3, $4,$5) returning *'
 			//run query
 			const result = await connect.query(sql, [
-				u.username,
-				u.email,
-				u.number,
+				u.name,
+				u.phone,
 				hashPassword(u.password),
-				u.imgprofile === '' ? 'image-1687075732968.png' : u.imgprofile,
-				u.balance === '' ? 0 : u.balance,
-				u.idNF,
-				u.idNB,
-				u.statusAccess === '' ? 'user' : u.statusAccess,
-				u.win === '' ? '0' : u.win,
+				u.access,
+				u.email,
 			])
 			//release connect
 			connect.release()
 			//return created user
+
 			return result.rows[0]
 		} catch (err: any) {
 			// throw new Error(`email already exists! `)
@@ -39,12 +35,11 @@ class UserModel {
 		}
 	}
 	//get all users
-	async getAll(): Promise<User[]> {
+	async getAllUsers(): Promise<User[]> {
 		try {
 			//open connect with DB
 			const connect = await db.connect()
-			const sql =
-				'SELECT id, username, email, number	, imgprofile, balance, idNF, idNB, statusAccess, tree, win from users'
+			const sql = 'SELECT id, date, name, phone, access, email  from users'
 			//run query
 			const result = await connect.query(sql)
 			//release connect
@@ -56,12 +51,12 @@ class UserModel {
 		}
 	}
 	//get specific user
-	async getOne(id: string): Promise<User> {
+	async getOneUser(id: string): Promise<User> {
 		try {
 			//open connect with DB
 			const connect = await db.connect()
 			const sql =
-				'SELECT id, username, email, number, imgprofile, balance, idNF, idNB, statusAccess, bundleName, bundleId, tree, win from users WHERE id=($1)'
+				'SELECT id, date, name, phone, access, email from users WHERE id=($1)'
 			//run query
 			const result = await connect.query(sql, [id])
 			//release connect
@@ -77,7 +72,7 @@ class UserModel {
 			//open connect with DB
 			const connect = await db.connect()
 			const sql =
-				'SELECT id, username, email, number, imgprofile, balance, idNF, idNB, statusAccess, bundleName, bundleId, win from users WHERE email=($1)'
+				'SELECT id, date, name, phone, access, email from users WHERE email=($1)'
 			//run query
 			const result = await connect.query(sql, [email])
 			//release connect
@@ -94,16 +89,13 @@ class UserModel {
 		try {
 			//open connect with DB
 			const connect = await db.connect()
-			const sql = `UPDATE users SET email=$1, username=$2,  number=$3, imgprofile=$4 , bundleName=$5, bundleId=$6 , statusAccess=$7 WHERE id=$8 RETURNING *`
+			const sql = `UPDATE users SET name=$1, phone=$2, access=$3, email=$4 WHERE id=$5 RETURNING *`
 			//run query
 			const result = await connect.query(sql, [
+				u.name,
+				u.phone,
+				u.access,
 				u.email,
-				u.username,
-				u.number,
-				u.imgprofile,
-				u.bundleName,
-				u.bundleId,
-				u.statusAccess,
 				u.id,
 			])
 			//release connect
@@ -115,82 +107,6 @@ class UserModel {
 		}
 	}
 
-	async updateImgUser(u: User): Promise<User> {
-		try {
-			//open connect with DB
-			const connect = await db.connect()
-			const sql = `UPDATE users SET  imgprofile=$1  WHERE id=$2 RETURNING *`
-			//run query
-			const result = await connect.query(sql, [u.imgprofile, u.id])
-			//release connect
-			connect.release()
-			//return created user
-			return result.rows[0]
-		} catch (err) {
-			throw new Error(`could not update  user ${u.email}, ${err}`)
-		}
-	}
-	async updateBalance(u: User): Promise<User> {
-		try {
-			//open connect with DB
-			const connect = await db.connect()
-			const sql = `UPDATE users SET  balance=$1  WHERE id=$2 RETURNING *`
-			//run query
-			const result = await connect.query(sql, [u.balance, u.id])
-			//release connect
-			connect.release()
-			//return created user
-			return result.rows[0]
-		} catch (err) {
-			throw new Error(`could not update  user ${u.email}, ${err}`)
-		}
-	}
-	async updateWin(u: User): Promise<User> {
-		try {
-			//open connect with DB
-			const connect = await db.connect()
-			const sql = `UPDATE users SET  win=$1  WHERE id=$2 RETURNING *`
-			//run query
-			const result = await connect.query(sql, [u.win, u.id])
-			//release connect
-			connect.release()
-			//return created user
-			return result.rows[0]
-		} catch (err) {
-			throw new Error(`could not update  user ${u.email}, ${err}`)
-		}
-	}
-	async updatePass(u: User): Promise<User> {
-		try {
-			//open connect with DB
-			const connect = await db.connect()
-			const sql = `UPDATE users SET  password=$1  WHERE id=$2 RETURNING *`
-			//run query
-			const result = await connect.query(sql, [hashPassword(u.password), u.id])
-			//release connect
-			connect.release()
-			//return created user
-			return result.rows[0]
-		} catch (err) {
-			throw new Error(`could not update  user , ${err}`)
-		}
-	}
-	async updateTree(u: User): Promise<User> {
-		try {
-			//open connect with DB
-			const connect = await db.connect()
-			const sql = `UPDATE users SET  tree=$1  WHERE id=$2 RETURNING *`
-			//run query
-			const result = await connect.query(sql, [u.tree, u.id])
-			//release connect
-			connect.release()
-			//return created user
-			return result.rows[0]
-		} catch (err) {
-			throw new Error(`could not update  user ${u.tree}, ${err}`)
-		}
-	}
-	//delete user
 	async delete(id: string): Promise<User> {
 		try {
 			//open connect with DB
@@ -207,11 +123,11 @@ class UserModel {
 		}
 	}
 	//authenticate user
-	async auth(email: string, password: string): Promise<User | null> {
+	async auth(phone: string | number, password: string): Promise<User | null> {
 		try {
 			const connect = await db.connect()
-			const sql = `SELECT password FROM users WHERE email=$1`
-			const res = await connect.query(sql, [email])
+			const sql = `SELECT password FROM users WHERE phone=$1`
+			const res = await connect.query(sql, [phone])
 			if (res.rows.length) {
 				const {password: hashPassword} = res.rows[0]
 				const isPassValid = bcrypt.compareSync(
@@ -220,11 +136,15 @@ class UserModel {
 				)
 				if (isPassValid) {
 					const userInfo = await connect.query(
-						`SELECT id, email, username, number, imgprofile, balance, idNF, idNB, statusAccess, bundleName, bundleId FROM users WHERE email=($1)`,
-						[email]
+						`SELECT id, date, name, phone, access, email FROM users WHERE phone=($1)`,
+						[phone]
 					)
 					return userInfo.rows[0]
+				} else {
+					throw new Error(`password not match`)
 				}
+			} else {
+				throw new Error(`not found this number`)
 			}
 			connect.release()
 			return null

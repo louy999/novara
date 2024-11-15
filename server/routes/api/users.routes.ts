@@ -8,7 +8,7 @@ const routes = Router()
 
 routes.post('/', async (req: Request, res: Response, next) => {
 	try {
-		const user = await userModel.create(req.body)
+		const user = await userModel.createUser(req.body)
 		res.json({
 			status: 'success',
 			data: {...user},
@@ -21,7 +21,7 @@ routes.post('/', async (req: Request, res: Response, next) => {
 //create
 routes.get('/', async (req: Request, res: Response, next) => {
 	try {
-		const user = await userModel.getAll()
+		const user = await userModel.getAllUsers()
 		res.json({
 			status: 'success',
 			data: user,
@@ -33,7 +33,7 @@ routes.get('/', async (req: Request, res: Response, next) => {
 })
 routes.get('/:id', async (req: Request, res: Response, next) => {
 	try {
-		const user = await userModel.getOne(req.params.id as unknown as string)
+		const user = await userModel.getOneUser(req.params.id as unknown as string)
 		res.json({
 			status: 'success',
 			data: user,
@@ -69,66 +69,7 @@ routes.patch('/:id', async (req: Request, res: Response, next) => {
 		next(err)
 	}
 })
-routes.patch('/img/:id', async (req: Request, res: Response, next) => {
-	try {
-		const user = await userModel.updateImgUser(req.body)
-		res.json({
-			status: 'success',
-			data: user,
-			message: 'user updated successfully',
-		})
-	} catch (err) {
-		next(err)
-	}
-})
-routes.patch('/balance/:id', async (req: Request, res: Response, next) => {
-	try {
-		const user = await userModel.updateBalance(req.body)
-		res.json({
-			status: 'success',
-			data: user,
-			message: 'user updated successfully',
-		})
-	} catch (err) {
-		next(err)
-	}
-})
-routes.patch('/win/:id', async (req: Request, res: Response, next) => {
-	try {
-		const user = await userModel.updateWin(req.body)
-		res.json({
-			status: 'success',
-			data: user,
-			message: 'user updated successfully',
-		})
-	} catch (err) {
-		next(err)
-	}
-})
-routes.patch('/pass/:id', async (req: Request, res: Response, next) => {
-	try {
-		const user = await userModel.updatePass(req.body)
-		res.json({
-			status: 'success',
-			data: user,
-			message: 'user updated successfully',
-		})
-	} catch (err) {
-		next(err)
-	}
-})
-routes.patch('/tree/:id', async (req: Request, res: Response, next) => {
-	try {
-		const user = await userModel.updateTree(req.body)
-		res.json({
-			status: 'success',
-			data: user,
-			message: 'user updated successfully',
-		})
-	} catch (err) {
-		next(err)
-	}
-})
+
 routes.delete('/:id', async (req: Request, res: Response, next) => {
 	try {
 		const user = await userModel.delete(req.params.id as unknown as string)
@@ -143,36 +84,17 @@ routes.delete('/:id', async (req: Request, res: Response, next) => {
 })
 routes.post('/auth', async (req: Request, res: Response, next) => {
 	try {
-		const {email, password} = req.body
-		const user = await userModel.auth(email, password)
+		const {phone, password} = req.body
+		const user = await userModel.auth(phone, password)
 		const token = jwt.sign({user}, config.tokenSecret as unknown as string)
-		if (!user) {
-			return res.status(401).json({
-				status: 'error',
-				message: 'the username and password do not match please try agin',
-			})
-		}
-		res.cookie('accessToken', token, {
-			httpOnly: true,
-		})
-
 		res.json({
 			status: 'success',
-			data: {...user},
+			data: {...user, token},
 			message: 'user auth successfully',
 		})
 	} catch (err) {
 		next(err)
 	}
-})
-routes.post('/logout', async (req: Request, res: Response, next) => {
-	res
-		.clearCookie('accessToken', {
-			secure: true,
-			sameSite: 'none',
-		})
-		.status(200)
-		.json('user has been logout')
 })
 
 export default routes

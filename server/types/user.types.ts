@@ -1,19 +1,11 @@
 type User = {
 	id?: string
-	password: string
+	date?: string
+	name: string
 	email: string
-	username: string
-	number: number
-	imgprofile?: string
-	balance?: string
-	URLTree?: string
-	idNF?: string
-	idNB?: string
-	statusAccess?: string
-	bundleId: string
-	bundleName: string
-	tree: string
-	win: string
+	phone: string | number
+	password: string
+	access: boolean
 }
 
 export default User

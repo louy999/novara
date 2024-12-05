@@ -51,18 +51,22 @@ const GetAllOfferComponent = async () => {
             <FilterBannerOffer />
           </Suspense>
         </div>
-        <div className=" flex flex-wrap justify-center mt-10 gap-10">
-          {fetchAllOffer.data.data.length !== 0 ? (
-            fetchAllOffer.data.data
-              .filter((offer: dataOffer) => Boolean(offer.status) === true)
-              .map((offer: dataOffer) => (
-                <MapOffers key={offer.id} {...offer} />
-              ))
-          ) : (
-            <div className="text-2xl uppercase w-full flex justify-center items-center relative ">
-              no found
-            </div>
-          )}
+        <div className="flex flex-wrap justify-center mt-10 gap-10">
+          <Suspense
+            fallback={<div className="text-center">Loading offers...</div>}
+          >
+            {fetchAllOffer.data.data.length !== 0 ? (
+              fetchAllOffer.data.data
+                .filter((offer: dataOffer) => Boolean(offer.status) === true)
+                .map((offer: dataOffer) => (
+                  <MapOffers key={offer.id} {...offer} />
+                ))
+            ) : (
+              <div className="text-2xl uppercase w-full flex justify-center items-center relative">
+                no found
+              </div>
+            )}
+          </Suspense>
         </div>
       </div>
     );

@@ -1,91 +1,102 @@
 "use client";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import MapOffers from "../home/offers/MapOffers";
-import AllLaunches from "./allLaunches";
-import FiltrationButton from "./filtrationButton";
+import React, { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import MapRequest from "../request/MapRequest";
 
-interface DataOffer {
-  id: string;
-  developer_id: string;
-  image_offer: string;
-  furniture: string;
-  bed: string;
-  bath: string;
-  down_payment: string;
-  types: string;
-  location: string;
-  installment: string;
-  areas: string;
-  status: boolean;
-  cat: string;
+interface Request {
+  id: number;
+  user_id: number;
+  date: string;
+  request: string;
 }
 
-const MapAllOffers = () => {
+interface TokenDataType {
+  id: string | number;
+  access: boolean;
+}
+
+interface MapAllOffersProps {
+  allRequest: Request[];
+  tokenData: TokenDataType;
+}
+
+const MapAllOffers: React.FC<MapAllOffersProps> = ({
+  allRequest,
+  tokenData,
+}) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [displayedRequests, setDisplayedRequests] = useState<Request[]>([]);
+  const itemsPerPage = 10;
+
   const searchParams = useSearchParams();
-  const [dataOffer, setDataOffer] = useState<DataOffer[]>([]);
-  const searchTypes = searchParams.get("types");
-  const searchLocation = searchParams.get("location");
-  const searchDownMin = searchParams.get("down_payment_min");
-  const searchDownMax = searchParams.get("down_payment_max");
+  const router = useRouter();
 
   useEffect(() => {
-    const getAllOffersFetch = async () => {
-      try {
-        const res = await axios.get(`${process.env.local}/offer`);
-        setDataOffer(res.data.data);
-      } catch (error) {
-        console.error("Error fetching offers:", error);
-      }
-    };
-    getAllOffersFetch();
-  }, []);
-  const filteredOffers = dataOffer.filter((offer) => {
-    console.log(
-      Number(searchDownMin) <= Number(offer.down_payment) &&
-        Number(offer.down_payment) <= Number(searchDownMax)
+    const page = parseInt(searchParams?.get("page") || "1", 10);
+    setCurrentPage(page);
+
+    const sortedRequests = allRequest.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    return (
-      offer.status === true &&
-      (!searchTypes || offer.types === searchTypes) &&
-      (!searchLocation || offer.location.includes(searchLocation)) &&
-      (!searchDownMin || Number(searchDownMin) <= Number(offer.down_payment)) &&
-      (!searchDownMax || Number(searchDownMax) >= Number(offer.down_payment))
-    );
-  });
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setDisplayedRequests(sortedRequests.slice(startIndex, endIndex));
+  }, [searchParams, allRequest]);
+
+  const totalPages = Math.ceil(allRequest.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page !== currentPage) {
+      router.push(`/request?page=${page}`);
+    }
+  };
+
+  const renderPagination = () => {
+    const pages: JSX.Element[] = [];
+    let dotsAdded = false;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - 1 && i <= currentPage + 1)
+      ) {
+        pages.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`join-item btn mb-10 ${
+              i === currentPage ? "btn-primary" : ""
+            }`}
+          >
+            {i}
+          </button>
+        );
+      } else if (
+        (i === currentPage - 2 || i === currentPage + 2) &&
+        !dotsAdded
+      ) {
+        pages.push(
+          <button key={`dots-${i}`} className="join-item btn btn-disabled">
+            ...
+          </button>
+        );
+        dotsAdded = true;
+      }
+    }
+
+    return pages;
+  };
 
   return (
-    <div className="relative top-28 overflow-x-hidden">
-      <div className="bg-neutral text-white text-4xl pt-3 pl-2 bg-opacity-40 mb-5">
-        <div>New Launches</div>
-        <div className="carousel carousel-center rounded-box w-full space-x-4 p-4">
-          {dataOffer.length ? (
-            dataOffer
-              .filter((offer) => offer.cat === "Launches")
-              .map((offer, index) => <AllLaunches key={index} {...offer} />)
-          ) : (
-            <div className="text-2xl uppercase w-full flex justify-center items-center">
-              No Found
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="relative bg-info bg-opacity-15 pt-10">
-        <FiltrationButton />
-        <div className="flex flex-wrap justify-center mt-10 gap-10">
-          {filteredOffers.length ? (
-            filteredOffers.map((offer, index) => (
-              <MapOffers key={index} {...offer} />
-            ))
-          ) : (
-            <div className="text-2xl uppercase w-full flex justify-center items-center min-h-screen h-full">
-              No Found
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="w-full relative top-10 flex flex-col items-center gap-5 bg-gradient-to-r from-[#e6e9f0] to-[#eef1f5] h-full mb-10">
+      <Suspense fallback={<div>Loading requests...</div>}>
+        {displayedRequests.map((r, a) => (
+          <MapRequest key={a} data={r} tokenData={tokenData} />
+        ))}
+      </Suspense>
+      <div className="join mt-5">{renderPagination()}</div>
     </div>
   );
 };
